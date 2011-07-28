@@ -40,6 +40,8 @@
 #   Note: 'trim' and 'bitly' shorteners require the 'rubygems' and
 #   'json' ruby modules.
 #
+# 2010-07-28, Daniel
+#     version 1.8.1: Add script repo. Please fork and submit.
 # 2010-01-07, nils_2 <weechatter@arcor.de>
 #     version 1.8: URI will be shorten only for messages
 #      checking for notify_message, notify_private and notify_highlight first
@@ -67,8 +69,9 @@ require 'uri'
 SCRIPT_NAME = 'url_shorten'
 SCRIPT_AUTHOR = 'Daniel Bretoi <daniel@bretoi.com>'
 SCRIPT_DESC = 'Shorten url'
-SCRIPT_VERSION = '1.8'
+SCRIPT_VERSION = '1.8.1'
 SCRIPT_LICENSE = 'BSD'
+SCRIPT_REPO = 'https://github.com/danielb2/weechat-scripts'
 
 DEFAULTS = {
   'maxlen'      => '50',
