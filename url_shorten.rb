@@ -147,23 +147,31 @@ def fetch(uri_str, limit = 10)
   end
 end
 
+def url_encode(url)
+  begin
+    return URI.parse(url).to_s
+  rescue URI::InvalidURIError
+    return URI.encode(url)
+  end
+end
+
 def qurl_shorten(url)
-  fetch('http://www.qurl.com/automate.php?url=' + URI.encode(url)).gsub('www.','')
+  fetch('http://www.qurl.com/automate.php?url=' + url_encode(url)).gsub('www.','')
 end
 
 def tinyurl_shorten(url)
-  fetch('http://tinyurl.com/api-create.php?url=' + URI.encode(url))
+  fetch('http://tinyurl.com/api-create.php?url=' + url_encode(url))
 end
 
 def isgd_shorten(url)
-  fetch('http://is.gd/api.php?longurl=' + URI.encode(url))
+  fetch('http://is.gd/api.php?longurl=' + url_encode(url))
 end
 
 def trim_shorten(url)
   require 'rubygems'
   require 'json'
 
-  params = ['url=' + URI.encode(url)]
+  params = ['url=' + url_encode(url)]
   params << 'newtrim=1'
   #params << 'sandbox=1'  # comment out for release
   json = fetch('http://api.tr.im/v1/trim_url.json?' + params.join('&'))
@@ -187,7 +195,7 @@ def yourls_shorten(url)
   require 'json/pure'
   params = ['action=shorturl']
   params << 'format=simple'
-  params << 'url=' + URI.encode(url)
+  params << 'url=' + url_encode(url)
   yourls_url = Weechat.config_get_plugin('yourls_url')
   api_url = yourls_url + params.join('&')
   begin
@@ -202,7 +210,7 @@ def bitly_shorten(url)
   require 'rubygems'
   require 'json'
 
-  params = ['longUrl=' + URI.encode(url)]
+  params = ['longUrl=' + url_encode(url)]
   params << 'login=' + Weechat.config_get_plugin('bitly_login')
   params << 'apiKey=' + Weechat.config_get_plugin('bitly_key')
   api_url = 'http://api.bit.ly/shorten?version=2.0.1&' + params.join('&')
