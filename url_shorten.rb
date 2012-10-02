@@ -240,10 +240,14 @@ end
 
 def shortener(url)
   service = Weechat.config_get_plugin('shortener').tr('.','')
-  begin
-    send("#{service}_shorten", url)
-  rescue NoMethodError => e
-    "Shortening service #{service} not supported... #{e}"
+  if service == "url"
+    "Shortening service #{service} is invalid"
+  else
+    begin
+      send("#{service}_shorten", url)
+    rescue NoMethodError => e
+      "Shortening service #{service} not supported... #{e}"
+    end
   end
 end
 
