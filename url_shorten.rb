@@ -33,6 +33,7 @@
 # isgd  http://is.gd/
 # trim  http://tr.im/
 # bitly http://bit.ly/
+# waaai http://waa.ai/
 #
 #   Note: attempting to use the bitly shortener without setting the
 #   bitly_login and bitly_key config variables will fail.
@@ -231,6 +232,10 @@ def bitly_shorten(url)
   else
     url_data['errorMessage']
   end
+end
+
+def waaai_shorten(url)
+  fetch('http://waa.ai/api.php?url=' + url_encode(url))
 end
 
 def shortener(url)
