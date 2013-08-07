@@ -71,29 +71,20 @@ DEFAULTS = {
 def weechat_init
   Weechat.register SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE, SCRIPT_DESC, "", ""
   Weechat.hook_command SCRIPT_NAME, SCRIPT_DESC, "url", "url: url to shorten", "", SCRIPT_NAME, ""
-  #Weechat.hook_signal "*,irc_in2_privmsg", "msg_shorten", ""
   Weechat.hook_print "", "notify_message", "://", 1, "msg_shorten", ""
   Weechat.hook_print "", "notify_private", "://", 1, "msg_shorten", ""
   Weechat.hook_print "", "notify_highlight", "://", 1, "msg_shorten", ""
-  DEFAULTS.each_pair { |option, def_value|
-    cur_value = Weechat.config_get_plugin(option)
-    if cur_value.nil? || cur_value.empty?
-      Weechat.config_set_plugin(option, def_value)
-    end
-  }
+  set_defaults
 
   cwprint "[url] Shortener service set to: #{service}"
 
-  if Weechat.config_get_plugin("shortener").eql?('bitly')
-    cfg_bitly_login = Weechat.config_get_plugin("bitly_login")
-    cfg_bitly_key   = Weechat.config_get_plugin("bitly_key")
-    if cfg_bitly_login.empty? || cfg_bitly_key.empty?
-      yellow = Weechat.color("yellow")
-      Weechat.print("", "#{yellow}WARNING: The bit.ly shortener requires a valid API login and key.")
-      Weechat.print("", "#{yellow}WARNING: Please configure the `bitly_login' and `bitly_key' options before using this script.")
-    end
-  end
+  configure_bitly
+  configure_yourls
 
+  return Weechat::WEECHAT_RC_OK
+end
+
+def configure_yourls
   if Weechat.config_get_plugin("shortener").eql?('yourls')
     # not quite ready for key based auth
     # should be researched http://code.google.com/p/yourls/wiki/PasswordlessAPI
@@ -104,8 +95,27 @@ def weechat_init
       Weechat.print("", "#{yellow}WARNING: Please configure the `yourls_url' option before using this script.")
     end
   end
+end
 
-  return Weechat::WEECHAT_RC_OK
+def configure_bitly
+  if Weechat.config_get_plugin("shortener").eql?('bitly')
+    cfg_bitly_login = Weechat.config_get_plugin("bitly_login")
+    cfg_bitly_key   = Weechat.config_get_plugin("bitly_key")
+    if cfg_bitly_login.empty? || cfg_bitly_key.empty?
+      yellow = Weechat.color("yellow")
+      Weechat.print("", "#{yellow}WARNING: The bit.ly shortener requires a valid API login and key.")
+      Weechat.print("", "#{yellow}WARNING: Please configure the `bitly_login' and `bitly_key' options before using this script.")
+    end
+  end
+end
+
+def set_defaults
+  DEFAULTS.each_pair { |option, def_value|
+    cur_value = Weechat.config_get_plugin(option)
+    if cur_value.nil? || cur_value.empty?
+      Weechat.config_set_plugin(option, def_value)
+    end
+  }
 end
 
 def fetch(uri_str, limit = 10)
