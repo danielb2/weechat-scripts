@@ -1,4 +1,4 @@
-# Copyright (c) 2008, Daniel Bretoi <daniel@bretoi.com>
+# Copyright (c) 2013, Daniel Bretoi <daniel@bretoi.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
