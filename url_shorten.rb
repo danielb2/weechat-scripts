@@ -23,7 +23,10 @@
 # * Simpler, more robust version of tinyurl (doesn't rely on html output)
 # * Echo's urls from all channels that are over the plugin's maxlen value
 #     in a shortened format.
+# * If maxlen is not set, uses window width to compute value for maxlen
 # * allows for manual shortening of urls
+# * allows for custom service. Just set plugins.var.ruby.url_shorten.custom to
+#     <http://service.com/?url=>%s
 # * set config variable 'shortener' to one of:
 #
 # Value   Service used
@@ -34,7 +37,6 @@
 # trim  http://tr.im/
 # bitly http://bit.ly/
 # waaai http://waa.ai/
-# tcbp  http://tcbp.net/
 
 # access configs with /set plugins.var.ruby.url_shorten.*
 #
@@ -60,9 +62,10 @@ DEFAULTS = {
   'maxlen'      => '0',
   'color'       => 'red',
   'shortener'   => 'tinyurl',
+  'custom'      => '',
   'bitly_login' => '',
   'bitly_key'   => '',
-  'yourls_url' => '',
+  'yourls_url'  => '',
 }
 
 def weechat_init
@@ -121,7 +124,7 @@ def fetch(uri_str, limit = 10)
 
   case response
   when Net::HTTPSuccess
-    then 
+    then
       response.body
   when Net::HTTPRedirection
     then 
@@ -129,6 +132,8 @@ def fetch(uri_str, limit = 10)
   else
     response.error!
   end
+rescue Exception => e
+  return e.message
 end
 
 def url_encode(url)
@@ -145,10 +150,6 @@ end
 
 def tinyurl_shorten(url)
   fetch('http://tinyurl.com/api-create.php?url=' + url)
-end
-
-def tcbp_shorten(url)
-  fetch('http://tcbp.net/?url=' + url)
 end
 
 def isgd_shorten(url)
@@ -247,15 +248,17 @@ def service
 end
 
 def shortener(url)
-  if service == "url"
-    "Shortening service #{service} is invalid"
-  else
-    begin
-      return send("#{service}_shorten", url_encode(url))
-    rescue NoMethodError => e
+  return fetch(custom_url(url)) if custom_url(url).size > 0
+
+  begin
+    return send("#{service}_shorten", url_encode(url))
+  rescue NoMethodError => e
       "Shortening service #{service} not supported... #{e}"
-    end
   end
+end
+
+def custom_url(url)
+  sprintf Weechat.config_get_plugin('custom'), url_encode(url)
 end
 
 def regexp_url
