@@ -155,7 +155,10 @@ def url_encode(url)
 end
 
 def qurl_shorten(url)
-  fetch('http://www.qurl.com/automate.php?url=' + url).gsub('www.','')
+  # deprecate this one later
+  shorten = 'http://www.qurl.com/automate.php?url='
+  Weechat.config_set_plugin('custom', shorten + '%s')
+  fetch(shorten + url).gsub('www.','')
 end
 
 def tinyurl_shorten(url)
@@ -163,7 +166,10 @@ def tinyurl_shorten(url)
 end
 
 def isgd_shorten(url)
-  fetch('http://is.gd/api.php?longurl=' + url)
+  # deprecate this one later
+  shorten = 'http://is.gd/api.php?longurl='
+  Weechat.config_set_plugin('custom', shorten + '%s')
+  fetch(shorten + url)
 end
 
 def trim_shorten(url)
