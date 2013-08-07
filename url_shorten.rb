@@ -34,57 +34,36 @@
 # trim  http://tr.im/
 # bitly http://bit.ly/
 # waaai http://waa.ai/
+# tcbp  http://tcbp.net/
+
+# access configs with /set plugins.var.ruby.url_shorten.*
 #
-#   Note: attempting to use the bitly shortener without setting the
-#   bitly_login and bitly_key config variables will fail.
-#
-#   Note: 'trim' and 'bitly' shorteners require the 'rubygems' and
-#   'json' ruby modules.
-#
-# 2012-10-02, Kovensky <diogomfranco@gmail.com>
-#     version 1.8.2: Add waa.ai support, fix URI encoding to avoid double encoding
-# 2010-07-28, Daniel
-#     version 1.8.1: Add script repo. Please fork and submit.
-# 2010-01-07, nils_2 <weechatter@arcor.de>
-#     version 1.8: URI will be shorten only for messages
-#      checking for notify_message, notify_private and notify_highlight first
-# 2010-10-11, Daniel
-#     version 1.7: google use comma in URL so make them acceptable too
-# 2010-08-05, Derek Carter <goozbach@friocorte.com>
-#     version 1.6: add support for yourls
-# 2009-12-12, FlashCode <flashcode@flashtux.org>
-#     version 1.5: fix wrong license in register()
-# 2009-11-29, penryu <penryu@gmail.com>
-#     version 1.4: fixed URI encoding bug, added shorteners
-#      changed default shortener, as qurl is _slow_
-# 2009-11-29, penryu <penryu@gmail.com>
-#     version 1.3: add bit.ly shortener routine
-#      add ability to choose shortener from config
-# 2009-05-02, FlashCode <flashcode@flashtux.org>:
-#     version 1.2: sync with last API changes
-# 2008-11-11, FlashCode <flashcode@flashtux.org>:
-#     version 1.1: conversion to WeeChat 0.3.0+
+# Contributors:
+# Derek Carter <goozbach@friocorte.com>
+# FlashCode <flashcode@flashtux.org>
+# Kovensky <diogomfranco@gmail.com>
+# nils_2 <weechatter@arcor.de>
+# penryu <penryu@gmail.com>
 
 require 'net/http'
 require 'net/https'
 require 'uri'
 
-SCRIPT_NAME = 'url_shorten'
-SCRIPT_AUTHOR = 'Daniel Bretoi <daniel@bretoi.com>'
-SCRIPT_DESC = 'Shorten url'
-SCRIPT_VERSION = '1.8.2'
+SCRIPT_NAME    = 'url_shorten'
+SCRIPT_AUTHOR  = 'Daniel Bretoi <daniel@bretoi.com>'
+SCRIPT_DESC    = 'Shorten url'
+SCRIPT_VERSION = '1.9.0'
 SCRIPT_LICENSE = 'BSD'
-SCRIPT_REPO = 'https://github.com/danielb2/weechat-scripts'
+SCRIPT_REPO    = 'https://github.com/danielb2/weechat-scripts'
 
 DEFAULTS = {
-  'maxlen'      => '50',
+  'maxlen'      => '0',
   'color'       => 'red',
   'shortener'   => 'tinyurl',
   'bitly_login' => '',
   'bitly_key'   => '',
   'yourls_url' => '',
 }
-
 
 def weechat_init
   Weechat.register SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE, SCRIPT_DESC, "", ""
@@ -99,6 +78,8 @@ def weechat_init
       Weechat.config_set_plugin(option, def_value)
     end
   }
+
+  cwprint "[url] Shortener service set to: #{service}"
 
   if Weechat.config_get_plugin("shortener").eql?('bitly')
     cfg_bitly_login = Weechat.config_get_plugin("bitly_login")
@@ -159,22 +140,26 @@ def url_encode(url)
 end
 
 def qurl_shorten(url)
-  fetch('http://www.qurl.com/automate.php?url=' + url_encode(url)).gsub('www.','')
+  fetch('http://www.qurl.com/automate.php?url=' + url).gsub('www.','')
 end
 
 def tinyurl_shorten(url)
-  fetch('http://tinyurl.com/api-create.php?url=' + url_encode(url))
+  fetch('http://tinyurl.com/api-create.php?url=' + url)
+end
+
+def tcbp_shorten(url)
+  fetch('http://tcbp.net/?url=' + url)
 end
 
 def isgd_shorten(url)
-  fetch('http://is.gd/api.php?longurl=' + url_encode(url))
+  fetch('http://is.gd/api.php?longurl=' + url)
 end
 
 def trim_shorten(url)
   require 'rubygems'
   require 'json'
 
-  params = ['url=' + url_encode(url)]
+  params = ['url=' + url]
   params << 'newtrim=1'
   #params << 'sandbox=1'  # comment out for release
   json = fetch('http://api.tr.im/v1/trim_url.json?' + params.join('&'))
@@ -191,6 +176,23 @@ def trim_shorten(url)
   end
 end
 
+# current window print
+def cwprint(str)
+  Weechat.print(Weechat.current_buffer, str.to_s)
+end
+
+def get_config_string(string)
+  option = Weechat.config_get(string)
+  Weechat.config_string(option)
+end
+
+def window_width
+  time_stamp_width = Time.now.strftime(get_config_string('weechat.look.buffer_time_format')).size
+  current_window_width = Weechat.window_get_integer(Weechat.current_window, "win_chat_width")
+  max_nick_length = 16
+  current_window_width - max_nick_length - time_stamp_width
+end
+
 def yourls_shorten(url)
   # use yourls shortener
   # need to provide url config option
@@ -198,7 +200,7 @@ def yourls_shorten(url)
   require 'json/pure'
   params = ['action=shorturl']
   params << 'format=simple'
-  params << 'url=' + url_encode(url)
+  params << 'url=' + url
   yourls_url = Weechat.config_get_plugin('yourls_url')
   api_url = yourls_url + params.join('&')
   begin
@@ -213,7 +215,7 @@ def bitly_shorten(url)
   require 'rubygems'
   require 'json'
 
-  params = ['longUrl=' + url_encode(url)]
+  params = ['longUrl=' + url]
   params << 'login=' + Weechat.config_get_plugin('bitly_login')
   params << 'apiKey=' + Weechat.config_get_plugin('bitly_key')
   api_url = 'http://api.bit.ly/shorten?version=2.0.1&' + params.join('&')
@@ -237,16 +239,19 @@ def bitly_shorten(url)
 end
 
 def waaai_shorten(url)
-  fetch('http://waa.ai/api.php?url=' + url_encode(url))
+  fetch 'http://waa.ai/api.php?url=' + url
+end
+
+def service
+  Weechat.config_get_plugin('shortener').tr('.','')
 end
 
 def shortener(url)
-  service = Weechat.config_get_plugin('shortener').tr('.','')
   if service == "url"
     "Shortening service #{service} is invalid"
   else
     begin
-      send("#{service}_shorten", url)
+      return send("#{service}_shorten", url_encode(url))
     rescue NoMethodError => e
       "Shortening service #{service} not supported... #{e}"
     end
@@ -265,7 +270,7 @@ def url_shorten(data,buffer,msg)
   url = (msg.scan regexp_url).to_s
   short = shortener(url)
   color = Weechat.color(Weechat.config_get_plugin("color"))
-  Weechat.print(Weechat.current_buffer, "[url]\t#{color}#{short}");
+  Weechat.print(Weechat.current_buffer, "[url]:\t#{color}#{short}");
   return Weechat::WEECHAT_RC_OK
 end
 
@@ -279,10 +284,11 @@ def msg_shorten(data,buffer,time,tags,displayed,highlight,prefix,message)
 
   url = matchdata[0].to_s
   maxlen = Weechat.config_get_plugin("maxlen").to_i
+  maxlen = window_width if maxlen == 0
   return Weechat::WEECHAT_RC_OK if url.length < maxlen
 
   short = shortener(url)
   color = Weechat.color(Weechat.config_get_plugin("color"))
-  Weechat.print(buffer, "[url]\t%s%s" % [color, short])
+  Weechat.print(buffer, "[url]:\t%s%s" % [color, short])
   return Weechat::WEECHAT_RC_OK
 end
