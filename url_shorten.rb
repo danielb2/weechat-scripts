@@ -34,7 +34,6 @@
 # qurl  http://qurl.com/
 # tinyurl http://tinyurl.com/
 # isgd  http://is.gd/
-# trim  http://tr.im/
 # bitly http://bit.ly/
 # waaai http://waa.ai/
 
@@ -61,8 +60,8 @@ SCRIPT_REPO    = 'https://github.com/danielb2/weechat-scripts'
 DEFAULTS = {
   'maxlen'      => '0',
   'color'       => 'red',
-  'shortener'   => 'tinyurl',
-  'custom'      => '',
+  'shortener'   => '',
+  'custom'      => 'http://tinyurl.com/api-create.php?url=%s',
   'bitly_login' => '',
   'bitly_key'   => '',
   'yourls_url'  => '',
@@ -161,8 +160,18 @@ def qurl_shorten(url)
   fetch(shorten + url).gsub('www.','')
 end
 
+def waaai_shorten(url)
+  # deprecate this one later
+  shorten = 'http://waa.ai/api.php?url='
+  Weechat.config_set_plugin('custom', shorten + '%s')
+  fetch(shorten + url)
+end
+
 def tinyurl_shorten(url)
-  fetch('http://tinyurl.com/api-create.php?url=' + url)
+  # deprecate this one later
+  shorten = 'http://tinyurl.com/api-create.php?url='
+  Weechat.config_set_plugin('custom', shorten + '%s')
+  fetch(shorten + url)
 end
 
 def isgd_shorten(url)
@@ -170,27 +179,6 @@ def isgd_shorten(url)
   shorten = 'http://is.gd/api.php?longurl='
   Weechat.config_set_plugin('custom', shorten + '%s')
   fetch(shorten + url)
-end
-
-def trim_shorten(url)
-  require 'rubygems'
-  require 'json'
-
-  params = ['url=' + url]
-  params << 'newtrim=1'
-  #params << 'sandbox=1'  # comment out for release
-  json = fetch('http://api.tr.im/v1/trim_url.json?' + params.join('&'))
-  data = JSON.parse(json)
-
-  if data['status']['result'].eql?('OK')
-    begin
-      data['url']
-    rescue NoMethodError => ex
-      "Failure parsing tr.im result: #{ex}"
-    end
-  else
-    data['status']['message']
-  end
 end
 
 # current window print
@@ -253,10 +241,6 @@ def bitly_shorten(url)
   else
     url_data['errorMessage']
   end
-end
-
-def waaai_shorten(url)
-  fetch 'http://waa.ai/api.php?url=' + url
 end
 
 def service
