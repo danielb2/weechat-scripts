@@ -244,6 +244,8 @@ def waaai_shorten(url)
 end
 
 def service
+  custom =  Weechat.config_get_plugin('custom')
+  return custom if custom.size > 0
   Weechat.config_get_plugin('shortener').tr('.','')
 end
 
