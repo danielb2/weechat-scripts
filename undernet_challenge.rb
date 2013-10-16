@@ -34,7 +34,7 @@ def notice_cb(data, signal, signal_data)
   if signal_data.include? "Ident broken or disabled, to continue to connect you must type"
     server = signal.split(',')[0]
     passwd = signal_data.split(" ")[-1]
-    Weechat.print('','Sending UnderNet quote pass')
+    Weechat.print('',"Sending UnderNet quote pass: #{passwd}")
     corebuf = Weechat.buffer_search_main()
     Weechat.command(corebuf, sprintf("/quote -server %s pass %s", server,passwd))
     Weechat.unhook(@notice_hook)
