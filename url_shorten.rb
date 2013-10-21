@@ -52,7 +52,7 @@ require 'uri'
 
 SCRIPT_NAME    = 'url_shorten'
 SCRIPT_AUTHOR  = 'Daniel Bretoi <daniel@bretoi.com>'
-SCRIPT_DESC    = 'Shorten url'
+SCRIPT_DESC    = 'Shorten URLs with many shortening services, including a free-form option that\'s defined by you.'
 SCRIPT_VERSION = '1.9.0'
 SCRIPT_LICENSE = 'BSD'
 SCRIPT_REPO    = 'https://github.com/danielb2/weechat-scripts'
